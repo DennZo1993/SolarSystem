@@ -3,7 +3,7 @@ SET(
 
   Engine.cpp
   Exception.cpp
-  MainLoop.cpp
+  Shader.cpp
 )
 
 
