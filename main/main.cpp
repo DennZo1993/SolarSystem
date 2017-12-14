@@ -19,16 +19,51 @@ int main() {
         engine.Init();
 
         // Load and compile shaders.
-        TShader shader;
-        shader.LoadVertexShader("../../shaders/common.vert");
-        shader.LoadFragmentShader("../../shaders/common.frag");
+        TShaderProgram shader;
+        shader.LoadShader(GL_VERTEX_SHADER, "../../shaders/common.vert");
+        shader.LoadShader(GL_FRAGMENT_SHADER, "../../shaders/common.frag");
+        shader.LoadShader(GL_TESS_CONTROL_SHADER, "../../shaders/common.tc");
+        shader.LoadShader(GL_TESS_EVALUATION_SHADER, "../../shaders/common.te");
         shader.Build();
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+
+        GLfloat vertices[] = {
+             0.0f,  0.5f, 0.0f,
+             0.5f, -0.5f, 0.0f,
+            -0.5f, -0.5f, 0.0f
+        };
+
+        GLuint VBO, VAO;
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+        glEnableVertexAttribArray(0); 
+        glBindVertexArray(0);
+
 
         // Main loop.
         while (engine.Running()) {
             engine.BeginMainLoopIteration();
 
             shader.Use();
+            // Update the uniform color
+            GLfloat timeValue = glfwGetTime();
+            GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
+            GLint vertexColorLocation = glGetUniformLocation(shader.GetProgramID(), "vertexColor");
+            glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+            GLint levelLocation = glGetUniformLocation(shader.GetProgramID(), "level");
+            glUniform1f(levelLocation, 3.0);
+
+            // Draw the triangle
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_PATCHES, 0, 3);
+            glBindVertexArray(0);
 
             engine.EndMainLoopIteration();
         }

@@ -5,10 +5,13 @@
 #include <GL/glew.h>
 
 
-class TShader {
+class TShaderProgram {
 public:
-    void LoadVertexShader(const std::string& fileName);
-    void LoadFragmentShader(const std::string& fileName);
+    TShaderProgram() = default;
+    ~TShaderProgram();
+
+public:
+    void LoadShader(GLenum shaderType, const std::string& fileName);
 
     void Build();
 
@@ -17,19 +20,22 @@ public:
     GLuint GetProgramID() const { return ProgramID; }
 
 protected:
-    std::string Load(const std::string& fileName,
-                     const std::string& shaderType);
+    GLuint CreateShader(GLenum shaderType, const std::string& fileName);
 
-    void Compile(GLuint shaderId,
-                 const std::string& shaderSource,
-                 const std::string& shaderType);
+    std::string LoadSourceFile(const std::string& fileName);
+
+    void CompileSource(GLuint shaderId, const std::string& shaderSource);
 
     void Link();
     void DestroyShaders();
 
 private:
-    GLuint ProgramID;
+    GLuint ProgramID { 0 };
 
-    GLuint VertexShaderID;
-    GLuint FragmentShaderID;
+    GLuint VertexShaderID         { 0 }; // Required
+    GLuint FragmentShaderID       { 0 }; // Required
+    GLuint TessControlShaderID    { 0 }; // Optional
+    GLuint TessEvaluationShaderID { 0 }; // Optional
+    GLuint GeometryShaderID       { 0 }; // Optional
+    GLuint ComputeShaderID        { 0 }; // Optional
 };

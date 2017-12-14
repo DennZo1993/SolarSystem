@@ -4,34 +4,74 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <iostream>
 
 
-void TShader::LoadVertexShader(const std::string& fileName) {
-    std::string type = "vertex";
-    std::string source = Load(fileName, type);
-    VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-    Compile(VertexShaderID, source, type);
+TShaderProgram::~TShaderProgram()
+{
+    DestroyShaders();
 }
 
 
-void TShader::LoadFragmentShader(const std::string& fileName) {
-    std::string type = "fragment";
-    std::string source = Load(fileName, type);
-    FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-    Compile(FragmentShaderID, source, type);
+void TShaderProgram::LoadShader(GLenum shaderType, const std::string& fileName)
+{
+    switch (shaderType) {
+    case GL_VERTEX_SHADER:
+        VertexShaderID = CreateShader(shaderType, fileName);
+        break;
+
+    case GL_FRAGMENT_SHADER:
+        FragmentShaderID = CreateShader(shaderType, fileName);
+        break;
+
+    case GL_TESS_CONTROL_SHADER:
+        TessControlShaderID = CreateShader(shaderType, fileName);
+        break;
+
+    case GL_TESS_EVALUATION_SHADER:
+        TessEvaluationShaderID = CreateShader(shaderType, fileName);
+        break;
+
+    case GL_GEOMETRY_SHADER:
+        GeometryShaderID = CreateShader(shaderType, fileName);
+        break;
+
+    case GL_COMPUTE_SHADER:
+        ComputeShaderID = CreateShader(shaderType, fileName);
+        break;
+
+    default:
+        throw TShaderException("Unsupported shader type: " +
+                               std::to_string(static_cast<int>(shaderType)));
+    } // switch (shaderType)
 }
 
 
-void TShader::Build() {
+void TShaderProgram::Build()
+{
     Link();
     DestroyShaders();
 }
 
 
-std::string TShader::Load(const std::string& fileName, const std::string& shaderType) {
+GLuint TShaderProgram::CreateShader(GLenum shaderType, const std::string& fileName)
+{
+    std::string source = LoadSourceFile(fileName);
+
+    GLuint id = glCreateShader(shaderType);
+    if (!id)
+        throw TShaderException("Failed to create shader!");
+
+    CompileSource(id, source);
+    return id;
+}
+
+
+std::string TShaderProgram::LoadSourceFile(const std::string& fileName)
+{
     std::ifstream ifs(fileName);
     if (!ifs.is_open())
-        throw TShaderException("Failed to load " + shaderType + " shader from " + fileName);
+        throw TShaderException("Failed to load shader from " + fileName);
 
     std::stringstream ss;
     ss << ifs.rdbuf();
@@ -39,7 +79,8 @@ std::string TShader::Load(const std::string& fileName, const std::string& shader
 }
 
 
-void TShader::Compile(GLuint shaderId, const std::string& shaderSource, const std::string& shaderType) {
+void TShaderProgram::CompileSource(GLuint shaderId, const std::string& shaderSource)
+{
     const char* shaderSourcePtr = shaderSource.c_str();
     glShaderSource(shaderId, 1, &shaderSourcePtr, nullptr);
     glCompileShader(shaderId);
@@ -54,18 +95,42 @@ void TShader::Compile(GLuint shaderId, const std::string& shaderSource, const st
         std::string log(infoLogLength + 1, '\0');
         glGetShaderInfoLog(shaderId, infoLogLength, nullptr, &log[0]);
 
-        throw TShaderException("Failed to compile " + shaderType + " shader, log: \"" + log + "\"");
+        throw TShaderException("Failed to compile shader, log: \"" + log + "\"");
     }
 }
 
 
-void TShader::Link() {
+void TShaderProgram::Link() {
     ProgramID = glCreateProgram();
+    if (!ProgramID)
+        throw TShaderException("Failed to create shader program!");
+
+    // Attach shaders that are present. Keep in mind that some of them
+    // are required.
+    if (!VertexShaderID)
+        throw TShaderException("Failed to link shader program, vertex shader is not loaded!");
     glAttachShader(ProgramID, VertexShaderID);
+
+    if (!FragmentShaderID)
+        throw TShaderException("Failed to link shader program, fragment shader is not loaded!");
     glAttachShader(ProgramID, FragmentShaderID);
+
+    if (TessControlShaderID)
+        glAttachShader(ProgramID, TessControlShaderID);
+
+    if (TessEvaluationShaderID)
+        glAttachShader(ProgramID, TessEvaluationShaderID);
+
+    if (GeometryShaderID)
+        glAttachShader(ProgramID, GeometryShaderID);
+
+    if (ComputeShaderID)
+        glAttachShader(ProgramID, ComputeShaderID);
+
+    // Link.
     glLinkProgram(ProgramID);
 
-    // Check
+    // Check.
     GLint checkSuccessful;
     int infoLogLength;
     glGetProgramiv(ProgramID, GL_LINK_STATUS, &checkSuccessful);
@@ -79,10 +144,37 @@ void TShader::Link() {
 }
 
 
-void TShader::DestroyShaders() {
-    glDetachShader(ProgramID, VertexShaderID);
-    glDetachShader(ProgramID, FragmentShaderID);
-    
-    glDeleteShader(VertexShaderID);
-    glDeleteShader(FragmentShaderID);
+void TShaderProgram::DestroyShaders() {
+    if (!ProgramID)
+        return;
+
+    if (VertexShaderID) {
+        glDetachShader(ProgramID, VertexShaderID);
+        glDeleteShader(VertexShaderID);
+    }
+
+    if (FragmentShaderID) {
+        glDetachShader(ProgramID, FragmentShaderID);
+        glDeleteShader(FragmentShaderID);
+    }
+
+    if (TessControlShaderID) {
+        glDetachShader(ProgramID, TessControlShaderID);
+        glDeleteShader(TessControlShaderID);
+    }
+
+    if (TessEvaluationShaderID) {
+        glDetachShader(ProgramID, TessEvaluationShaderID);
+        glDeleteShader(TessEvaluationShaderID);
+    }
+
+    if (GeometryShaderID) {
+        glDetachShader(ProgramID, GeometryShaderID);
+        glDeleteShader(GeometryShaderID);
+    }
+
+    if (ComputeShaderID) {
+        glDetachShader(ProgramID, ComputeShaderID);
+        glDeleteShader(ComputeShaderID);
+    }
 }
