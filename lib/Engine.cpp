@@ -3,52 +3,52 @@
 
 
 TEngine::TEngine(const TEngineOptions& engineOpts, const TWindowOptions& windowOpts)
-	: EngineOptions(engineOpts)
-	, WindowOptions(windowOpts)
+    : EngineOptions(engineOpts)
+    , WindowOptions(windowOpts)
 {
 }
 
 
 TEngine::~TEngine() {
-	Destroy();
+    Destroy();
 }
 
 
 void TEngine::Destroy() noexcept {
-	glfwTerminate();
+    glfwTerminate();
 }
 
 
 void TEngine::Init() {
-	glfwInit();
+    glfwInit();
 
-	InitWindow();
+    InitWindow();
 }
 
 
 void TEngine::InitWindow() {
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-	Window.reset(glfwCreateWindow(WindowOptions.width,
-								  WindowOptions.height,
-								  WindowOptions.caption.c_str(),
-								  nullptr,
-								  nullptr));
+    Window.reset(glfwCreateWindow(WindowOptions.width,
+                                  WindowOptions.height,
+                                  WindowOptions.caption.c_str(),
+                                  nullptr,
+                                  nullptr));
 
-	if (!Window)
-		throw TEngineException("Failed to initialize window");
+    if (!Window)
+        throw TEngineException("Failed to initialize window");
 
-	glfwMakeContextCurrent(Window.get());
+    glfwMakeContextCurrent(Window.get());
 
-	glewExperimental = GL_TRUE;
-	auto glewInitResult = glewInit();
-	if (glewInitResult)
-		throw TEngineException("Failed to initialize GLEW, code: " + std::to_string(glewInitResult));
+    glewExperimental = GL_TRUE;
+    auto glewInitResult = glewInit();
+    if (glewInitResult)
+        throw TEngineException("Failed to initialize GLEW, code: " + std::to_string(glewInitResult));
   
-	glViewport(0, 0, WindowOptions.width, WindowOptions.height);
+    glViewport(0, 0, WindowOptions.width, WindowOptions.height);
 }
 
 
@@ -56,18 +56,18 @@ void TEngine::InitWindow() {
 
 
 bool TEngine::Running() const {
-	return true;
+    return true;
 }
 
 
 void TEngine::BeginMainLoopIteration() {
-	glfwPollEvents();
+    glfwPollEvents();
 
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 
 void TEngine::EndMainLoopIteration() {
-	glfwSwapBuffers(Window.get());
+    glfwSwapBuffers(Window.get());
 }
