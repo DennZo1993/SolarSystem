@@ -1,0 +1,18 @@
+#undef OPTION
+#define OPTION(Type, Option)       \
+TSelf##& Option(const Type##& arg) \
+{                                  \
+    Option##_ = arg;               \
+    return *this;                  \
+}                                  \
+Type Option##_
+
+
+#undef OPTION_DEFAULT
+#define OPTION_DEFAULT(Type, Option, DefaultValue) \
+TSelf##& Option(const Type##& arg)                 \
+{                                                  \
+    Option##_ = arg;                               \
+    return *this;                                  \
+}                                                  \
+Type Option##_ = DefaultValue

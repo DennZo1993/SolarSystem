@@ -1,6 +1,7 @@
 SET(
   SOURCES
 
+  Camera.cpp
   Engine.cpp
   Exception.cpp
   Shader.cpp

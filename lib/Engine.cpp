@@ -32,9 +32,9 @@ void TEngine::InitWindow() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    Window.reset(glfwCreateWindow(WindowOptions.width,
-                                  WindowOptions.height,
-                                  WindowOptions.caption.c_str(),
+    Window.reset(glfwCreateWindow(WindowOptions.Width_,
+                                  WindowOptions.Height_,
+                                  WindowOptions.Caption_.c_str(),
                                   nullptr,
                                   nullptr));
 
@@ -48,7 +48,7 @@ void TEngine::InitWindow() {
     if (glewInitResult)
         throw TEngineException("Failed to initialize GLEW, code: " + std::to_string(glewInitResult));
   
-    glViewport(0, 0, WindowOptions.width, WindowOptions.height);
+    glViewport(0, 0, WindowOptions.Width_, WindowOptions.Height_);
 }
 
 

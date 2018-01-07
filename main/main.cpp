@@ -1,6 +1,8 @@
 #include <iostream>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
+#include "Camera.h"
 #include "Engine.h"
 #include "Exception.h"
 #include "Shader.h"
@@ -11,8 +13,7 @@ int main() {
         TEngine engine(// Engine options
                        TEngineOptions(),
                        // Window options
-                       TWindowOptions().Width(500)
-                                       .Height(500)
+                       TWindowOptions().Width(500).Height(500)
                                        .Caption("Solar System"));
 
         // Init core stuff.
@@ -26,8 +27,10 @@ int main() {
         shader.LoadShader(GL_TESS_EVALUATION_SHADER, "../../shaders/common.te");
         shader.Build();
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        TCamera camera(500, 500);
+        camera.MoveTo(glm::vec3(0.0f, 0.0f, 5.0f));
 
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         GLfloat vertices[] = {
              0.0f,  0.5f, 0.0f,
@@ -45,6 +48,7 @@ int main() {
         glEnableVertexAttribArray(0); 
         glBindVertexArray(0);
 
+        glm::mat4 modelMatrix(1.0f);
 
         // Main loop.
         while (engine.Running()) {
@@ -58,7 +62,16 @@ int main() {
             glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
             GLint levelLocation = glGetUniformLocation(shader.GetProgramID(), "level");
-            glUniform1f(levelLocation, 3.0);
+            glUniform1f(levelLocation, 1.0);
+
+            auto ModelMatrixLocation = glGetUniformLocation(shader.GetProgramID(), "model");
+            glUniformMatrix4fv(ModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+            auto ViewMatrixLocation = glGetUniformLocation(shader.GetProgramID(), "view");
+            glUniformMatrix4fv(ViewMatrixLocation, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
+
+            auto ProjectionMatrixLocation = glGetUniformLocation(shader.GetProgramID(), "projection");
+            glUniformMatrix4fv(ProjectionMatrixLocation, 1, GL_FALSE, glm::value_ptr(camera.GetProjectionMatrix()));
 
             // Draw the triangle
             glBindVertexArray(VAO);
